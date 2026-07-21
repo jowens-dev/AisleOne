@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AisleOne - Modern Grocery Price Optimizer</title>
+    <title>AisleOne</title>
     <meta name="description" content="Compare and optimize your grocery list pricing across all major grocery and warehouse club stores. Find the best deals with custom shopper profiles.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AisleOne">
-    <link rel="apple-touch-icon" href="assets/app_icon.svg">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
 <body>
     <div class="app-container">
@@ -220,6 +220,28 @@
                                     <span class="metric-value badge" id="metric-mode">Sam</span>
                                 </div>
                             </div>
+                            
+                            <!-- Travel & Convenience Metrics -->
+                            <div class="travel-metrics-card" id="travel-metrics-card" style="background: rgba(16, 185, 129, 0.05); border: 1px dashed var(--primary); border-radius: 12px; padding: 1.25rem; margin: 1.25rem 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-outfit);">🚗 Travel & Gas Cost Estimator</span>
+                                    <span class="badge badge-premium" style="font-size: 0.75rem;">Premium Feature</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin-top: 0.5rem; text-align: center;">
+                                    <div>
+                                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Est. Distance</span>
+                                        <span id="travel-distance" style="font-size: 1.15rem; font-weight: bold; color: var(--text-white);">0.0 miles</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Gas & Time Cost</span>
+                                        <span id="travel-cost" style="font-size: 1.15rem; font-weight: bold; color: var(--text-white);">$0.00</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Real Total Cost</span>
+                                        <span id="real-total-cost" style="font-size: 1.15rem; font-weight: bold; color: var(--primary);">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- List breakdown -->
                             <h4>Item Breakdown</h4>
@@ -343,6 +365,28 @@
                                 <ul id="recipe-missing-list"></ul>
                             </div>
                             
+                            <!-- Travel & Convenience Metrics for Recipes -->
+                            <div class="travel-metrics-card" id="recipe-travel-metrics-card" style="background: rgba(16, 185, 129, 0.05); border: 1px dashed var(--primary); border-radius: 12px; padding: 1.25rem; margin: 1.25rem 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-outfit);">🚗 Travel & Gas Cost Estimator</span>
+                                    <span class="badge badge-premium" style="font-size: 0.75rem;">Premium Feature</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin-top: 0.5rem; text-align: center;">
+                                    <div>
+                                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Est. Distance</span>
+                                        <span id="recipe-travel-distance" style="font-size: 1.15rem; font-weight: bold; color: var(--text-white);">0.0 miles</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Gas & Time Cost</span>
+                                        <span id="recipe-travel-cost" style="font-size: 1.15rem; font-weight: bold; color: var(--text-white);">$0.00</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Real Total Cost</span>
+                                        <span id="recipe-real-total-cost" style="font-size: 1.15rem; font-weight: bold; color: var(--primary);">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <button id="add-recipe-ingredients-btn" class="btn btn-action w-full mt-4" onclick="addRecipeToShoppingList()" style="background: linear-gradient(135deg, var(--premium) 0%, var(--premium-glow) 100%); box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);">Add Recipe Ingredients to Shopping List</button>
                         </div>
                     </div>
@@ -410,9 +454,19 @@
                 <input type="password" id="auth-password" placeholder="Password" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-card); color: var(--text-primary); padding: 0.85rem 1.25rem; border-radius: 12px; outline: none; width: 100%;">
             </div>
             
-            <div class="auth-actions" style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+            <!-- Legal Consent Footer -->
+            <div class="legal-consent-container" style="font-size: 0.8rem; margin: 1.25rem 0 0 0; color: var(--text-muted); text-align: center; line-height: 1.4;">
+                <p style="margin: 0;">
+                    By clicking "Register", you agree to our <br>
+                    <a href="terms.html" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: none; font-weight: 500;">Terms of Service</a> 
+                    and 
+                    <a href="privacy.html" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: none; font-weight: 500;">Privacy Policy</a>.
+                </p>
+            </div>
+            
+            <div class="auth-actions" style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
                 <button class="btn btn-primary" style="flex: 1;" onclick="loginUser()">Login</button>
-                <button class="btn btn-secondary" style="flex: 1;" onclick="registerUser()">Sign Up</button>
+                <button class="btn btn-secondary" style="flex: 1;" onclick="registerUser()">Register</button>
             </div>
         </div>
     </div>

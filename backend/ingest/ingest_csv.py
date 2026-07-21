@@ -3,7 +3,7 @@ import argparse
 import os
 import sqlite3
 import csv
-from utils.db_helpers import init_db, DB_PATH
+from utils.db_helpers import init_db, DB_PATH, get_conn
 from utils.normalize import canonicalize, parse_unit_and_qty
 
 
@@ -122,7 +122,7 @@ def main():
     init_db()
 
     # Connect to database
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
 
     try:
         if args.file:

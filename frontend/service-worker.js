@@ -5,7 +5,9 @@ const ASSETS = [
   '/app.js',
   '/app.css',
   '/assets/app_icon.svg',
-  '/manifest.json'
+  '/manifest.json',
+  '/terms.html',
+  '/privacy.html'
 ];
 
 // Install Event: cache all static assets

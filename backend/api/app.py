@@ -19,11 +19,18 @@ from api.auth import hash_password, verify_password, create_token, get_current_u
 app = FastAPI(title="Grocery Price Optimizer")
 
 # Configure CORS restrictions based on environment
-origins = [
-    origin.strip()
-    for origin in os.environ.get("ALLOWED_ORIGINS", "*").split(",")
-    if origin.strip()
-]
+env_origins = os.environ.get("ALLOWED_ORIGINS")
+if env_origins:
+    origins = [o.strip() for o in env_origins.split(",") if o.strip()]
+else:
+    origins = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "https://jowens-dev.github.io/AisleOne"
+    ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -207,6 +214,66 @@ def estimate_recipe(req: RecipeEstimateRequest, current_user: dict = Depends(get
         club_memberships=req.club_memberships,
         zip_code=req.zip_code,
     )
+def calculate_travel_metrics(zip_code: str, stores_used: list[str]) -> dict:
+    from utils.routing import get_store_zip_code, geocode_zip_code, get_drive_distance_osrm
+    
+    total_distance = 0.0
+    total_minutes = 0.0
+    gas_cost_per_mile = 0.15
+    time_cost_per_hour = 15.0
+    trips = len(stores_used)
+    
+    # Try to resolve origin coordinates
+    origin_coords = geocode_zip_code(zip_code)
+    
+    for store in stores_used:
+        route_success = False
+        if origin_coords and origin_coords[0] is not None:
+            store_zip = get_store_zip_code(zip_code, store)
+            dest_coords = geocode_zip_code(store_zip)
+            if dest_coords and dest_coords[0] is not None:
+                dist, dur = get_drive_distance_osrm(origin_coords, dest_coords)
+                if dist is not None and dur is not None:
+                    # Round trip distance
+                    total_distance += dist * 2
+                    # Round trip duration: driving duration * 2 + 10 mins shopping overhead
+                    total_minutes += (dur * 2) + 10
+                    route_success = True
+                    
+        if not route_success:
+            # Fallback to existing zip-code heuristic for this store
+            try:
+                zip_val = sum(int(c) for c in zip_code if c.isdigit())
+            except Exception:
+                zip_val = 15
+                
+            base_distances = {
+                "Walmart": 2.2,
+                "Target": 3.1,
+                "Kroger": 1.6,
+                "Safeway": 2.5,
+                "Costco": 5.4,
+                "Sams Club": 6.8,
+                "SamsClub": 6.8
+            }
+            base_dist = base_distances.get(store, 3.0)
+            variation = 0.8 + ((zip_val + len(store)) % 5) * 0.1
+            one_way = round(base_dist * variation, 1)
+            round_trip = one_way * 2
+            total_distance += round_trip
+            total_minutes += 10 + (round_trip * 3)
+            
+    total_gas_cost = round(total_distance * gas_cost_per_mile, 2)
+    total_time_cost = round((total_minutes / 60.0) * time_cost_per_hour, 2)
+    total_travel_cost = round(total_gas_cost + total_time_cost, 2)
+    
+    return {
+        "total_distance": round(total_distance, 1),
+        "total_gas_cost": total_gas_cost,
+        "total_time_cost": total_time_cost,
+        "total_travel_cost": total_travel_cost,
+        "total_minutes": round(total_minutes)
+    }
 
 
 @app.post("/cheapest")
@@ -242,7 +309,7 @@ def _get_item_prices(cur, raw_item: str, variant_id: Optional[int], zip_code: st
     if canonical_product_id is not None:
         # User selected a specific variant, query all variants for that product family
         query = """
-            SELECT s.store_name, p.price, pv.raw_name, p.date_collected, s.is_club, pv.id AS variant_id, p.unit_price
+            SELECT s.store_name, p.price, pv.raw_name, p.date_collected, s.is_club, pv.id AS variant_id, p.unit_price, pv.unit
             FROM prices p
             JOIN stores s ON p.store_id = s.id
             JOIN product_variants pv ON p.product_variant_id = pv.id
@@ -252,7 +319,7 @@ def _get_item_prices(cur, raw_item: str, variant_id: Optional[int], zip_code: st
     else:
         # Generic product query
         query = """
-            SELECT s.store_name, p.price, pv.raw_name, p.date_collected, s.is_club, pv.id AS variant_id, p.unit_price
+            SELECT s.store_name, p.price, pv.raw_name, p.date_collected, s.is_club, pv.id AS variant_id, p.unit_price, pv.unit
             FROM prices p
             JOIN stores s ON p.store_id = s.id
             JOIN product_variants pv ON p.product_variant_id = pv.id
@@ -323,7 +390,9 @@ def _single_store_optimization(cur, req: ItemRequest):
                 "price": row["price"],
                 "raw_name": row["raw_name"],
                 "date_collected": row["date_collected"],
-                "confidence_score": confidence_score
+                "confidence_score": confidence_score,
+                "unit": row.get("unit"),
+                "unit_price": row.get("unit_price")
             }
     
     # Calculate store scores (lower is better)
@@ -363,7 +432,9 @@ def _single_store_optimization(cur, req: ItemRequest):
                 "store": best_store,
                 "price": item_data["price"],
                 "raw_name": item_data["raw_name"],
-                "date_collected": item_data["date_collected"]
+                "date_collected": item_data["date_collected"],
+                "unit": item_data.get("unit"),
+                "unit_price": item_data.get("unit_price")
             })
             total_cost += item_data["price"]
         else:
@@ -375,13 +446,17 @@ def _single_store_optimization(cur, req: ItemRequest):
                 "price": None,
                 "note": "Not available at selected store"
             })
+            
+    travel_metrics = calculate_travel_metrics(req.zip_code, [best_store])
     
     return {
         "mode": "single_store",
         "selected_store": best_store,
         "items": results,
-        "total_cost": total_cost,
-        "stores_used": [best_store]
+        "total_cost": round(total_cost, 2),
+        "stores_used": [best_store],
+        "travel_metrics": travel_metrics,
+        "real_total_cost": round(total_cost + travel_metrics["total_travel_cost"], 2)
     }
 
 
@@ -406,7 +481,9 @@ def _minimize_visits_optimization(cur, req: ItemRequest):
             item_store_prices[canonical]["stores"][row["store_name"]] = {
                 "price": row["price"],
                 "raw_name": row["raw_name"],
-                "date_collected": row["date_collected"]
+                "date_collected": row["date_collected"],
+                "unit": row.get("unit"),
+                "unit_price": row.get("unit_price")
             }
     
     # Greedy algorithm: pick stores that cover most items at reasonable prices
@@ -469,7 +546,9 @@ def _minimize_visits_optimization(cur, req: ItemRequest):
                 "store": store,
                 "price": price,
                 "raw_name": sel_item["data"]["raw_name"],
-                "date_collected": sel_item["data"]["date_collected"]
+                "date_collected": sel_item["data"]["date_collected"],
+                "unit": sel_item["data"].get("unit"),
+                "unit_price": sel_item["data"].get("unit_price")
             })
             
             store_totals[store] = store_totals.get(store, 0) + price
@@ -483,14 +562,18 @@ def _minimize_visits_optimization(cur, req: ItemRequest):
                 "price": None,
                 "note": "Not available in selected stores"
             })
+            
+    travel_metrics = calculate_travel_metrics(req.zip_code, list(stores_used))
     
     return {
         "mode": "minimize_visits",
         "items": results,
         "stores_used": list(stores_used),
-        "store_totals": store_totals,
-        "total_cost": total_cost,
-        "num_stores": len(stores_used)
+        "store_totals": {name: round(total, 2) for name, total in store_totals.items()},
+        "total_cost": round(total_cost, 2),
+        "num_stores": len(stores_used),
+        "travel_metrics": travel_metrics,
+        "real_total_cost": round(total_cost + travel_metrics["total_travel_cost"], 2)
     }
 
 
@@ -523,6 +606,7 @@ def _maximize_savings_optimization(cur, req: ItemRequest):
                 "store": result_store_name,
                 "price": result_price,
                 "unit_price": result_unit_price,
+                "unit": row.get("unit"),
                 "raw_name": result_raw_name,
                 "date_collected": result_date_collected
             })
@@ -540,13 +624,17 @@ def _maximize_savings_optimization(cur, req: ItemRequest):
                 "note": "Not available in selected stores"
             })
 
+    travel_metrics = calculate_travel_metrics(req.zip_code, list(stores_used))
+
     return {
         "mode": "maximize_savings",
         "items": results,
         "stores_used": list(stores_used),
-        "store_totals": store_totals,
-        "total_cost": total_cost,
-        "num_stores": len(stores_used)
+        "store_totals": {name: round(total, 2) for name, total in store_totals.items()},
+        "total_cost": round(total_cost, 2),
+        "num_stores": len(stores_used),
+        "travel_metrics": travel_metrics,
+        "real_total_cost": round(total_cost + travel_metrics["total_travel_cost"], 2)
     }
 
 @app.get("/search")
@@ -556,7 +644,7 @@ def search_products(q: str, current_user: dict = Depends(get_current_user)):
     cur = conn.cursor()
     cur.execute(
         """
-        SELECT p.canonical_name, s.store_name, pr.price, pv.raw_name, pr.unit_price, s.is_club, pv.id AS variant_id
+        SELECT p.canonical_name, s.store_name, pr.price, pv.raw_name, pr.unit_price, s.is_club, pv.id AS variant_id, pv.unit
         FROM products p
         JOIN product_variants pv ON pv.product_id = p.id
         JOIN prices pr ON pr.product_variant_id = pv.id
@@ -569,7 +657,11 @@ def search_products(q: str, current_user: dict = Depends(get_current_user)):
     return [dict(row) for row in cur.fetchall()]
 
 # Mount static files dashboard
+# Frozen app unpacks static files to backend root /static
+# Local dev has it at ../frontend (relative to backend/)
 static_dir = Path(__file__).resolve().parents[1] / "static"
-static_dir.mkdir(exist_ok=True)
+if not static_dir.exists():
+    static_dir = Path(__file__).resolve().parents[2] / "frontend"
+
 app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
 

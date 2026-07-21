@@ -1,3 +1,9 @@
+// Detect if running locally or on GitHub Pages
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = IS_LOCAL 
+    ? (window.location.port === '8000' ? '' : 'http://localhost:8000')
+    : 'https://aisleone-api.placeholder-domain.com';
+
 // AisleOne Client-Side Application state
 let state = {
     shoppingList: [],
@@ -16,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Register Service Worker for PWA mobile installation
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js')
             .then(reg => console.log('[PWA] Service Worker registered successfully:', reg.scope))
             .catch(err => console.error('[PWA] Service Worker registration failed:', err));
     }
@@ -33,7 +39,7 @@ async function checkAuth() {
     }
 
     try {
-        const response = await fetch('/users/me', {
+        const response = await fetch(`${API_BASE_URL}/users/me`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
 
@@ -103,7 +109,7 @@ async function registerUser() {
     }
 
     try {
-        const response = await fetch('/auth/register', {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -133,7 +139,7 @@ async function loginUser() {
     }
 
     try {
-        const response = await fetch('/auth/token', {
+        const response = await fetch(`${API_BASE_URL}/auth/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -186,7 +192,7 @@ async function syncProfileWithBackend() {
     };
     
     try {
-        const response = await fetch('/users/profile', {
+        const response = await fetch(`${API_BASE_URL}/users/profile`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -316,7 +322,7 @@ async function handleItemInput(event) {
     
     const token = localStorage.getItem('aisleone_token');
     try {
-        const response = await fetch(`/search?q=${encodeURIComponent(q)}`, {
+        const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(q)}`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!response.ok) return;
@@ -459,7 +465,7 @@ async function optimizeList() {
     };
 
     try {
-        const response = await fetch('/cheapest', {
+        const response = await fetch(`${API_BASE_URL}/cheapest`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -489,19 +495,28 @@ function renderListResults(data) {
     modeEl.innerText = data.mode === 'single_store' ? 'Sam (Single)' : data.mode === 'minimize_visits' ? 'Bob (Balanced)' : 'Francine (Frugal)';
     modeEl.className = `metric-value badge ${data.mode === 'single_store' ? 'badge-free' : 'badge-premium'}`;
 
+    // Render travel metrics
+    const travel = data.travel_metrics;
+    if (travel) {
+        document.getElementById('travel-distance').innerText = `${travel.total_distance.toFixed(1)} miles`;
+        document.getElementById('travel-cost').innerText = `$${travel.total_travel_cost.toFixed(2)}`;
+        document.getElementById('real-total-cost').innerText = `$${data.real_total_cost.toFixed(2)}`;
+    }
+
     const tbody = document.getElementById('results-table-body');
     tbody.innerHTML = '';
 
     data.items.forEach(item => {
         const tr = document.createElement('tr');
         const priceText = item.price !== null ? `$${item.price.toFixed(2)}` : 'N/A';
+        const unitPriceHtml = (item.unit_price !== null && item.unit_price !== undefined) ? `<br><small style="font-size: 0.75rem; color: var(--text-muted)">($${item.unit_price.toFixed(2)} / ${item.unit || 'unit'})</small>` : '';
         const storeText = item.store ? `<span class="store-badge">${item.store}</span>` : `<span class="store-badge" style="color: var(--danger)">Unavailable</span>`;
         
         tr.innerHTML = `
             <td><strong>${item.query}</strong></td>
             <td><span style="color: var(--text-muted)">${item.canonical || 'No match'}</span></td>
             <td>${storeText}</td>
-            <td class="text-right">${priceText}</td>
+            <td class="text-right">${priceText}${unitPriceHtml}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -579,7 +594,7 @@ async function loadRecipes() {
     if (!token) return;
 
     try {
-        const response = await fetch('/recipes', {
+        const response = await fetch(`${API_BASE_URL}/recipes`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!response.ok) throw new Error('Failed to load recipes');
@@ -631,7 +646,7 @@ async function estimateRecipeCostAPI(recipe) {
     };
 
     try {
-        const response = await fetch('/recipes/estimate', {
+        const response = await fetch(`${API_BASE_URL}/recipes/estimate`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -660,12 +675,21 @@ function renderRecipeEstimate(data) {
     document.getElementById('recipe-metric-stores').innerText = data.stores_used.length;
     document.getElementById('recipe-metric-main-store').innerText = data.selected_store || 'Multiple';
 
+    // Render recipe travel metrics
+    const travel = data.travel_metrics;
+    if (travel) {
+        document.getElementById('recipe-travel-distance').innerText = `${travel.total_distance.toFixed(1)} miles`;
+        document.getElementById('recipe-travel-cost').innerText = `$${travel.total_travel_cost.toFixed(2)}`;
+        document.getElementById('recipe-real-total-cost').innerText = `$${data.real_total_cost.toFixed(2)}`;
+    }
+
     const tbody = document.getElementById('recipe-results-table-body');
     tbody.innerHTML = '';
 
     data.ingredients.forEach(item => {
         const tr = document.createElement('tr');
         const priceText = item.price !== null ? `$${item.price.toFixed(2)}` : 'N/A';
+        const unitPriceHtml = (item.unit_price !== null && item.unit_price !== undefined) ? `<br><small style="font-size: 0.75rem; color: var(--text-muted)">($${item.unit_price.toFixed(2)} / ${item.unit || 'unit'})</small>` : '';
         const storeText = item.store ? `<span class="store-badge">${item.store}</span>` : `<span class="store-badge" style="color: var(--danger)">Unavailable</span>`;
         const qtyText = `${item.quantity || 1.0} ${item.unit || ''}`.trim();
         
@@ -673,7 +697,7 @@ function renderRecipeEstimate(data) {
             <td><strong>${item.name}</strong><br><small style="color: var(--text-muted)">${item.raw_name || ''}</small></td>
             <td>${qtyText}</td>
             <td>${storeText}</td>
-            <td class="text-right">${priceText}</td>
+            <td class="text-right">${priceText}${unitPriceHtml}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -757,7 +781,7 @@ async function saveRecipe() {
     };
 
     try {
-        const response = await fetch('/recipes', {
+        const response = await fetch(`${API_BASE_URL}/recipes`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -795,7 +819,7 @@ async function searchExplorer() {
     if (!q) return;
 
     try {
-        const response = await fetch(`/search?q=${encodeURIComponent(q)}`, {
+        const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(q)}`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!response.ok) throw new Error('Search failed');
@@ -837,10 +861,11 @@ function renderExplorerResults(rows) {
         prices.forEach(p => {
             const clubClass = p.is_club ? 'class="club-store"' : '';
             const clubIndicator = p.is_club ? ' <span style="font-size: 0.7rem; color: var(--premium)">[Club]</span>' : '';
+            const unitPriceHtml = (p.unit_price !== null && p.unit_price !== undefined) ? `<br><small style="font-size: 0.75rem; color: var(--text-muted)">($${p.unit_price.toFixed(2)} / ${p.unit || 'unit'})</small>` : '';
             pricesHtml += `
                 <div ${clubClass} class="explorer-store-row">
                     <span class="store-name">${p.store_name}${clubIndicator}<br><small style="color: var(--text-muted)">${p.raw_name}</small></span>
-                    <span class="store-price">$${p.price.toFixed(2)}</span>
+                    <span class="store-price" style="text-align: right;">$${p.price.toFixed(2)}${unitPriceHtml}</span>
                 </div>
             `;
         });

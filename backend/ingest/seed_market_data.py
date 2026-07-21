@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from utils.db_helpers import DB_PATH, init_db
+from utils.db_helpers import DB_PATH, init_db, get_conn
 
 # Common items list
 PRODUCTS = [
@@ -121,7 +121,7 @@ def main():
     # Always run schema to ensure users table exists
     init_db()
     
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     cur = conn.cursor()
     
     # 1. Populate stores

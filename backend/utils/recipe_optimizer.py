@@ -37,6 +37,66 @@ def _build_item_store_map(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any
             "unit_price": row.get("unit_price"),
         }
     return store_map
+def calculate_travel_metrics(zip_code: str, stores_used: List[str]) -> dict:
+    from utils.routing import get_store_zip_code, geocode_zip_code, get_drive_distance_osrm
+    
+    total_distance = 0.0
+    total_minutes = 0.0
+    gas_cost_per_mile = 0.15
+    time_cost_per_hour = 15.0
+    trips = len(stores_used)
+    
+    # Try to resolve origin coordinates
+    origin_coords = geocode_zip_code(zip_code)
+    
+    for store in stores_used:
+        route_success = False
+        if origin_coords and origin_coords[0] is not None:
+            store_zip = get_store_zip_code(zip_code, store)
+            dest_coords = geocode_zip_code(store_zip)
+            if dest_coords and dest_coords[0] is not None:
+                dist, dur = get_drive_distance_osrm(origin_coords, dest_coords)
+                if dist is not None and dur is not None:
+                    # Round trip distance
+                    total_distance += dist * 2
+                    # Round trip duration: driving duration * 2 + 10 mins shopping overhead
+                    total_minutes += (dur * 2) + 10
+                    route_success = True
+                    
+        if not route_success:
+            # Fallback to existing zip-code heuristic for this store
+            try:
+                zip_val = sum(int(c) for c in zip_code if c.isdigit())
+            except Exception:
+                zip_val = 15
+                
+            base_distances = {
+                "Walmart": 2.2,
+                "Target": 3.1,
+                "Kroger": 1.6,
+                "Safeway": 2.5,
+                "Costco": 5.4,
+                "Sams Club": 6.8,
+                "SamsClub": 6.8
+            }
+            base_dist = base_distances.get(store, 3.0)
+            variation = 0.8 + ((zip_val + len(store)) % 5) * 0.1
+            one_way = round(base_dist * variation, 1)
+            round_trip = one_way * 2
+            total_distance += round_trip
+            total_minutes += 10 + (round_trip * 3)
+            
+    total_gas_cost = round(total_distance * gas_cost_per_mile, 2)
+    total_time_cost = round((total_minutes / 60.0) * time_cost_per_hour, 2)
+    total_travel_cost = round(total_gas_cost + total_time_cost, 2)
+    
+    return {
+        "total_distance": round(total_distance, 1),
+        "total_gas_cost": total_gas_cost,
+        "total_time_cost": total_time_cost,
+        "total_travel_cost": total_travel_cost,
+        "total_minutes": round(total_minutes)
+    }
 
 
 def estimate_recipe_cost(
@@ -154,6 +214,8 @@ def estimate_recipe_cost(
         counts = Counter(item["store"] for item in ingredient_results if item.get("store"))
         selected_store = counts.most_common(1)[0][0] if counts else None
 
+    travel_metrics = calculate_travel_metrics(zip_code, list(stores_used))
+
     return {
         "recipe_name": recipe_name,
         "mode": mode,
@@ -165,4 +227,6 @@ def estimate_recipe_cost(
         "store_totals": {name: round(total, 2) for name, total in sorted(store_totals.items())},
         "missing_ingredients": missing_ingredients,
         "source": "local-price-database",
+        "travel_metrics": travel_metrics,
+        "real_total_cost": round(total_cost + travel_metrics["total_travel_cost"], 2),
     }

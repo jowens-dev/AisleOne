@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - AisleOne</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --border-card: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --text-muted: #9ca3af;
+            --primary: #10b981;
+            --primary-hover: #059669;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 2.5rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--primary) 0%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .last-updated {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-card);
+            padding-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-top: 2.5rem;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .back-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .back-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Terms of Service</h1>
+        <div class="last-updated">Last Updated: July 20, 2026</div>
+
+        <p>Welcome to AisleOne. By using our website, service, or standalone application, you agree to comply with and be bound by the following terms and conditions. Please read these terms carefully before accessing or using the services.</p>
+
+        <h2>1. Acceptance of Terms</h2>
+        <p>By registering for an account or using AisleOne, you represent that you are at least 18 years of age and agree to these Terms of Service. If you do not agree to all terms, you may not use the services.</p>
+
+        <h2>2. Services Offered</h2>
+        <p>AisleOne provides a grocery shopping optimization tool that maps pricing variations across regional grocery stores and club markets. Features including optimized store routes, gas/driving distance estimators, and personalized store profiles are provided "as is" and are subject to change without notice.</p>
+
+        <h2>3. Accounts and Security</h2>
+        <p>When you create an account, you are responsible for maintaining the confidentiality of your credentials and are fully responsible for all activities that occur under your username. You agree to immediately notify us of any unauthorized use of your account.</p>
+
+        <h2>4. Use Constraints and Fair Play</h2>
+        <p>You agree not to exploit our platform, scrape data excessively, circumvent search rate limits, or leverage automated bots to manipulate price calculations. Any actions violating rate-limiting thresholds (such as the 1 request/second OSRM public API limit) may result in access suspension.</p>
+
+        <h2>5. Limitation of Liability</h2>
+        <p>AisleOne relies on regional scraping engines and third-party data inputs to estimate prices. We do not guarantee the real-time accuracy of grocery pricing, store inventory, or travel metrics. AisleOne shall not be held liable for any pricing discrepancies at retail locations or travel costs incurred.</p>
+
+        <h2>6. Modifications to Terms</h2>
+        <p>We reserve the right to alter these terms at any time. Your continued use of the services following the posting of modifications indicates your acknowledgement and consent to the new terms.</p>
+
+        <a href="index.html" class="back-btn">Back to App</a>
+    </div>
+</body>
+</html>

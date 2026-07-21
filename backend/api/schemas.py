@@ -98,4 +98,6 @@ class RecipeEstimateResponse(BaseModel):
     store_totals: dict[str, float]
     missing_ingredients: List[dict[str, Any]]
     source: str
+    travel_metrics: Optional[dict[str, Any]] = None
+    real_total_cost: Optional[float] = None
 

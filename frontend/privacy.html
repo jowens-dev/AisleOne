@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - AisleOne</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --border-card: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --text-muted: #9ca3af;
+            --primary: #10b981;
+            --primary-hover: #059669;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 2.5rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--primary) 0%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .last-updated {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-card);
+            padding-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-top: 2.5rem;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .back-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .back-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <div class="last-updated">Last Updated: July 20, 2026</div>
+
+        <p>AisleOne is committed to protecting your privacy. This Privacy Policy details how we handle user data when you utilize our application or service.</p>
+
+        <h2>1. Data Minimization & Collection</h2>
+        <p>We believe in collecting as little personal information as possible. The following details the scope of collected data:</p>
+        <ul>
+            <li><strong>Authentication Data:</strong> Usernames and hashed passwords required for database verification and authentication.</li>
+            <li><strong>Preference Profile:</strong> Tier classification, club memberships, and store preferences associated with your profile.</li>
+            <li><strong>Zip Code:</strong> Utilized for localized store distance calculations and geocoding operations.</li>
+        </ul>
+
+        <h2>2. Data Security & Storage</h2>
+        <p>Passwords are securely hashed using bcrypt prior to database insertion. Your profile preferences and list details are securely stored on our centralized Turso database server. We implement TLS/SSL encryption for all data transport between the frontend interface and backend APIs.</p>
+
+        <h2>3. Third-Party Integrations</h2>
+        <p>AisleOne queries the free, public OSRM (Open Source Routing Machine) API to compute driving distance and travel duration values based on zip code coordinates. No personally identifiable details (like usernames, passwords, or emails) are shared with third-party APIs during routing calls.</p>
+
+        <h2>4. Cookies & PWA Storage</h2>
+        <p>We utilize browser local storage to maintain your authentication state (`aisleone_token`). Our Progressive Web App uses Service Workers to cache basic frontend assets for quick loading, but does not capture personal browser analytics.</p>
+
+        <h2>5. Your Rights</h2>
+        <p>You retain the right to query, alter, or request the deletion of your account credentials and user profile information at any time. For concerns, contact support.</p>
+
+        <a href="index.html" class="back-btn">Back to App</a>
+    </div>
+</body>
+</html>

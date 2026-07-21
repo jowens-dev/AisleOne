@@ -16,3 +16,9 @@ ENV/
 
 # OS metadata
 .DS_Store
+
+# Build artifacts
+build/
+dist/
+*.spec
+
